@@ -12,9 +12,10 @@ from . import smoothing
 from . import const
 from scipy.signal import fftconvolve
 from tqdm import tqdm
+import sys
 
 
-def physical_lightcone_to_observational(physical_lightcone, input_z_low, output_dnu, output_dtheta, input_box_size_mpc=None, verbose=True):
+def physical_lightcone_to_observational(physical_lightcone, input_z_low, input_z_high, output_dnu, output_dtheta, input_box_size_mpc=None, verbose=True):
     '''
     Interpolate a lightcone volume from physical (length) units
     to observational (angle/frequency) units.
@@ -40,18 +41,23 @@ def physical_lightcone_to_observational(physical_lightcone, input_z_low, output_
     hf.print_msg('Binning in frequency...')
     lightcone_freq, output_freqs = bin_lightcone_in_frequency(physical_lightcone,\
                                                          input_z_low, input_box_size_mpc, output_dnu)
-    #Calculate the FoV in degrees at lowest z (largest one)
-    fov_deg = cm.angular_size_comoving(input_box_size_mpc, input_z_low)
+
+    #ES: Calculate the FoV in degrees at highest z
+    fov_deg = cm.angular_size_comoving(input_box_size_mpc, input_z_high)
+
     #Calculate dimensions of output volume
-    n_cells_theta = int(fov_deg*60./output_dtheta)
+    n_cells_theta = int(fov_deg*60./output_dtheta + 1.)
     n_cells_nu = len(output_freqs)
+
     #Go through each slice and make angular slices for each one
     hf.print_msg('Binning in angle...')
     output_volume = np.zeros((n_cells_theta, n_cells_theta, n_cells_nu))
+
     for i in tqdm(range(n_cells_nu), disable=not verbose):
         if i%10 == 0:
             hf.print_msg('Slice %d of %d' % (i, n_cells_nu))
         z = cm.nu_to_z(output_freqs[i])
+        #print("redshift : ", i, z)
         output_volume[:,:,i] = physical_slice_to_angular(lightcone_freq[:,:,i], z, \
                                         slice_size_mpc=input_box_size_mpc, fov_deg=fov_deg,\
                                         dtheta=output_dtheta, order=2)
@@ -122,8 +128,41 @@ def physical_slice_to_angular(input_slice, z, slice_size_mpc, fov_deg, dtheta, o
         
     Returns:
         (angular_slice, size_deg)
-    
     '''
+    
+    #For resampling
+    fov_mpc = cm.deg_to_cdist(fov_deg, z)
+    cell_size_mpc = fov_mpc/(fov_deg*60./dtheta)
+    n_cells_resampled = int(slice_size_mpc/cell_size_mpc)
+
+    #ES: Are we worried about edge effect? edges are likely to be cut
+    #ES: Resample in even number of cells so that it can be extracted symmetrically from centre
+    if n_cells_resampled % 2 != 0: 
+        n_cells_resampled -= 1
+    resampled_slice = resample_slice(input_slice, n_cells_resampled, order)
+    
+    #Rescale the array
+    slice_n = resampled_slice.shape[0] # size of the slice with the right pixel size in angular coordinates
+    wanted_n = int(fov_deg*60./dtheta + 1) # size of the slice of observational lightcone we want 
+
+    #print("slice_n and wanted_n = ", slice_n, wanted_n)
+    #print(resampled_slice.shape)
+
+    if wanted_n < slice_n:
+        #ES: we want to cut out extra edges in the slice 
+        extra = int((slice_n - wanted_n)/2.)
+        final_slice = resampled_slice[extra:-extra, extra:-extra]
+
+    elif wanted_n == slice_n:
+        final_slice = resampled_slice 
+
+    else:
+        # padding
+        final_slice = _get_padded_slice(resampled_slice, wanted_n)
+    
+    return final_slice
+    '''
+
     #Resample
     fov_mpc = cm.deg_to_cdist(fov_deg, z)
     cell_size_mpc = fov_mpc/(fov_deg*60./dtheta)
@@ -144,7 +183,8 @@ def physical_slice_to_angular(input_slice, z, slice_size_mpc, fov_deg, dtheta, o
     padded_slice = _get_padded_slice(resampled_slice, padded_n)
     
     return padded_slice
-    
+    '''
+
 
 def angular_slice_to_physical(input_slice, z, slice_size_deg, output_cell_size, output_size_mpc, order=0, prefilter=True):
     '''
@@ -223,7 +263,10 @@ def bin_lightcone_in_frequency(lightcone, z_low, box_size_mpc, dnu):
     input_frequencies = cm.z_to_nu(input_redshifts)
     nu1 = input_frequencies[0]
     nu2 = input_frequencies[-1]
-    output_frequencies = np.arange(nu1, nu2, -dnu)
+    #output_frequencies = np.arange(nu1, nu2, -dnu)
+    #print(output_frequencies)
+    #sys.exit()
+    output_frequencies = np.array([169.0, 163.6, 158.2, 152.8, 147.4, 142.0, 136.6, 131.2, 125.8, 120.4, 115.0])
     output_lightcone = np.zeros((lightcone.shape[0], lightcone.shape[1], \
                                  len(output_frequencies)))
     
@@ -279,6 +322,7 @@ def _get_padded_slice(input_slice, padded_n):
     padded_slice[:slice_n, slice_n:] = input_slice[:,:(padded_n-slice_n)]
     padded_slice[slice_n:, slice_n:] = input_slice[:(padded_n-slice_n), :(padded_n-slice_n)]
     return padded_slice
+
 
 def padding_lightcone(lc, padded_n=None, mode='wrap', verbose=True):
     '''

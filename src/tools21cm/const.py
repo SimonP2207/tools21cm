@@ -27,12 +27,20 @@ solar_masses_per_gram = 5.02785431e-34
 kms = 1.e5 #1 km/s in cm/s
 
 # Cosmology
-h = 0.7
-Omega0 = 0.27
-OmegaB = 0.044
+#h = 0.7
+#Omega0 = 0.27
+#OmegaB = 0.044
+#lam = 1.0-Omega0; OmegaL = lam
+#n_s = 0.96
+#sigma_8 = 0.8
+
+# ES : Update for Planck 2018 for 21cmFast input
+h = 0.6766
+Omega0 = (0.02242 + 0.11933) / 0.6766 ** 2.
+OmegaB = 0.02242 / 0.6766 ** 2.
 lam = 1.0-Omega0; OmegaL = lam
-n_s = 0.96
-sigma_8 = 0.8
+n_s = 0.9665
+sigma_8 = 0.8102
 
 # Set cosmological parameter
 def set_hubble_h(value):
