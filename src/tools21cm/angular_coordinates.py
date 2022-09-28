@@ -263,10 +263,9 @@ def bin_lightcone_in_frequency(lightcone, z_low, box_size_mpc, dnu):
     input_frequencies = cm.z_to_nu(input_redshifts)
     nu1 = input_frequencies[0]
     nu2 = input_frequencies[-1]
-    #output_frequencies = np.arange(nu1, nu2, -dnu)
+    output_frequencies = np.arange(nu1, nu2, -dnu)
     #print(output_frequencies)
     #sys.exit()
-    output_frequencies = np.array([169.0, 163.6, 158.2, 152.8, 147.4, 142.0, 136.6, 131.2, 125.8, 120.4, 115.0])
     output_lightcone = np.zeros((lightcone.shape[0], lightcone.shape[1], \
                                  len(output_frequencies)))
     
