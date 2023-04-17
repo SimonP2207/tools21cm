@@ -3,47 +3,9 @@ The default cosmological constants in this package are the values derived from 7
 """
 
 # This file contains cosmological constants, physical constants and conversion factors.
-
 import numpy as np
 
-# Various useful physical constants
-abu_he = 0.074
-abu_h = 1.0-abu_he
-c = 3.0e5 # km/s
-pc=  3.086e18 #1 pc in cm
-Mpc = 1e6*pc
-G_grav = 6.6732e-8
-m_p = 1.672661e-24 #g
-mean_molecular = abu_h+4.0*abu_he
-abu_he_mass = 0.2486 
-abu_h_mass = 1.0-abu_he_mass
-def set_abundance_helium(value):
-	global abu_he_mass, abu_h_mass
-	abu_he_mass = value
-	abu_h_mass = 1.0-abu_he_mass
 
-mean_molecular = 1.0/(1.0-abu_he_mass)
-solar_masses_per_gram = 5.02785431e-34
-kms = 1.e5 #1 km/s in cm/s
-
-# Cosmology
-h = 0.7
-Omega0 = 0.27
-OmegaB = 0.044
-lam = 1.0-Omega0; OmegaL = lam
-n_s = 0.96
-sigma_8 = 0.8
-
-# ES : Update for Planck 2018 for 21cmFast input
-# h = 0.6766
-# Omega0 = (0.02242 + 0.11933) / 0.6766 ** 2.
-# OmegaB = 0.02242 / 0.6766 ** 2.
-# lam = 1.0-Omega0; OmegaL = lam
-# n_s = 0.9665
-# sigma_8 = 0.8102
-
-
-# Set cosmological parameter
 def set_hubble_h(value):
 	"""
 	Define new hubble constant value (little h).
@@ -51,7 +13,7 @@ def set_hubble_h(value):
 	from tools21cm import cosmology as cm
 
 	global h, H0
-	h  = value 
+	h  = value
 	H0 = 100.0*h
 
 	cm.precalc_table_cdist = cm.z_to_cdist(cm.precalc_table_z)
@@ -66,7 +28,7 @@ def set_omega_matter(value):
 
 	global Omega0, lam
 	Omega0 = value
-	lam = 1.0-Omega0
+	lam = 1.0 - Omega0
 
 	cm.precalc_table_cdist = cm.z_to_cdist(cm.precalc_table_z)
 
@@ -78,7 +40,7 @@ def set_omega_baryon(value):
 	from . import cosmology as cm
 
 	global OmegaB
-	OmegaB = value 
+	OmegaB = value
 
 	cm.precalc_table_cdist = cm.z_to_cdist(cm.precalc_table_z)
 
@@ -89,8 +51,8 @@ def set_omega_lambda(value):
 	"""
 	from . import cosmology as cm
 
-	global lam
-	lam = value 
+	global lam, OmegaL
+	lam = value
 	OmegaL = value
 
 	cm.precalc_table_cdist = cm.z_to_cdist(cm.precalc_table_z)
@@ -103,7 +65,7 @@ def set_ns(value):
 	from . import cosmology as cm
 
 	global n_s
-	n_s = value 
+	n_s = value
 
 	cm.precalc_table_cdist = cm.z_to_cdist(cm.precalc_table_z)
 
@@ -115,10 +77,48 @@ def set_sigma_8(value):
 	from . import cosmology as cm
 
 	global sigma_8
-	sigma_8 = value 
+	sigma_8 = value
 
 	cm.precalc_table_cdist = cm.z_to_cdist(cm.precalc_table_z)
 
+def set_abundance_helium(value):
+	global abu_he_mass, abu_h_mass
+	abu_he_mass = value
+	abu_h_mass = 1.0-abu_he_mass
+
+
+# Various useful physical constants
+abu_he = 0.074
+abu_h = 1.0-abu_he
+c = 3.0e5 # km/s
+pc=  3.086e18 #1 pc in cm
+Mpc = 1e6*pc
+G_grav = 6.6732e-8
+m_p = 1.672661e-24 #g
+mean_molecular = abu_h+4.0*abu_he
+abu_he_mass = 0.2486 
+abu_h_mass = 1.0-abu_he_mass
+
+mean_molecular = 1.0/(1.0-abu_he_mass)
+solar_masses_per_gram = 5.02785431e-34
+kms = 1.e5 #1 km/s in cm/s
+
+# Cosmology
+h = 0.7
+Omega0 = 0.27
+OmegaB = 0.044
+lam = 1.0 - Omega0
+OmegaL = 1.0 - Omega0
+n_s = 0.96
+sigma_8 = 0.8
+
+# ES : Update for Planck 2018 for 21cmFast input
+# h = 0.6766
+# Omega0 = (0.02242 + 0.11933) / 0.6766 ** 2.
+# OmegaB = 0.02242 / 0.6766 ** 2.
+# lam = 1.0-Omega0; OmegaL = lam
+# n_s = 0.9665
+# sigma_8 = 0.8102
 
 # Cosmology
 H0 = 100.0*h
