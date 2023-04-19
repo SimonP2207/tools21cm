@@ -1,14 +1,19 @@
 '''
 Various functions for calculating some cosmological stuff
 '''
-
-from .import const
 import numpy as np
 from scipy.integrate import quadrature
 from scipy.interpolate import interp1d
+from . import const
 from .helper_functions import outputify
 
-# precalc_table_cdist = np.array([   0.  ,     85.36535896,    170.02599243,
+__all__ = ['luminosity_distance', 'z_to_nu', 'z_to_cdist', 'cdist_to_z',
+           'angular_size', 'angular_size_comoving', 'deg_to_cdist',
+           'nu_to_z', 'nu_to_wavel', 'nu_to_cdist', 'c_to_p',
+           'p_to_c', 'Tvir_to_M', 'M_to_Tvir']
+
+
+# _precalc_table_cdist = np.array([   0.  ,     85.36535896,    170.02599243,
 #           253.97218821,    337.19503137,    419.68640492,    501.43898711,
 #           582.44624565,    662.70242885,    742.20255458,    820.94239486,
 #           898.91846116,    976.12798514,   1052.56889863,   1128.2398119 ,
@@ -160,11 +165,11 @@ def cdist_to_z(dist):
     dist = np.atleast_1d(dist)
 
     z = np.zeros_like(dist)
-    func        = interp1d(precalc_table_cdist, precalc_table_z, kind='cubic',
+    func        = interp1d(_precalc_table_cdist, _precalc_table_z, kind='cubic',
                            bounds_error=False, fill_value="extrapolate")
     z_min_guess = func(dist)-1 if type(dist)==float else func(dist.min())-1
     z_max_guess = func(dist)+1 if type(dist)==float else func(dist.max())+1
-    table_z     = precalc_table_z[precalc_table_z>z_min_guess]
+    table_z     = _precalc_table_z[_precalc_table_z > z_min_guess]
     table_z     = table_z[table_z<z_max_guess]
     table_cdist = z_to_cdist(table_z)
     func = interp1d(table_cdist, table_z, kind='cubic', bounds_error=False,
@@ -352,5 +357,5 @@ def M_to_Tvir(M, z):
 
 
 # Precalculated table of comoving distances at various redshifts
-precalc_table_z = np.hstack((np.arange(0, 1, 0.02), np.logspace(0, 2, 200)))
-precalc_table_cdist = z_to_cdist(precalc_table_z)
+_precalc_table_z = np.hstack((np.arange(0, 1, 0.02), np.logspace(0, 2, 200)))
+_precalc_table_cdist = z_to_cdist(_precalc_table_z)
