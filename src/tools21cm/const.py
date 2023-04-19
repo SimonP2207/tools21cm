@@ -4,6 +4,7 @@ The default cosmological constants in this package are the values derived from 7
 
 # This file contains cosmological constants, physical constants and conversion factors.
 import numpy as np
+from astropy.cosmology import Cosmology, FLRW
 
 
 def set_hubble_h(value):
@@ -85,6 +86,19 @@ def set_abundance_helium(value):
 	global abu_he_mass, abu_h_mass
 	abu_he_mass = value
 	abu_h_mass = 1.0-abu_he_mass
+
+
+def set_cosmology(cosmology: FLRW):
+	"""
+	Sets tools21cm's cosmology parameters to those defined by a cosmology
+	instance from astropy
+	"""
+	set_hubble_h(cosmology.H0.value / 100.)
+	set_omega_matter(cosmology.Om0)
+	set_omega_baryon(cosmology.Ob0)
+	set_omega_lambda(1.0 - cosmology.Om0)
+	set_ns(cosmology.meta['n'])
+	set_sigma_8(cosmology.meta['sigma8'])
 
 
 # Various useful physical constants

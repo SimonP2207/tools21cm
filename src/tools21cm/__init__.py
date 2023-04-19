@@ -15,7 +15,7 @@ import sys
 #Import sub-modules 
 #import conv
 from .conv import * #set_sim_constants
-from .const import set_hubble_h, set_omega_matter, set_omega_baryon, set_omega_lambda, set_ns, set_sigma_8, set_abundance_helium
+from .const import set_cosmology, set_hubble_h, set_omega_matter, set_omega_baryon, set_omega_lambda, set_ns, set_sigma_8, set_abundance_helium
 from .beam_convolve import *
 from .density_file import *
 from .nbody_file import *
