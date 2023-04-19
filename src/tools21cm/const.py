@@ -38,21 +38,27 @@ def set_hubble_h(value):
     """
     Define new hubble constant value (little h).
     """
-    global h, H0
+    global h, H0, H0cgs, rho_crit_0, rho_matter, meandt
 
     h = value
     H0 = 100.0 * h
-
+    H0cgs = H0 * 1e5 / Mpc
+    rho_crit_0 = 3.0 * H0cgs * H0cgs / (8.0 * np.pi * G_grav)
+    rho_matter = rho_crit_0 * Omega0
+    meandt = 3.0 * lambda0 ** 3 / (32. * np.pi) * A10 * Tstar * num_h_0 / (
+            H0cgs / h) * 1000.
 
 @recalculate_precalc_tables
 def set_omega_matter(value):
     """
     Define new omega matter value.
     """
-    global Omega0, lam
+    global Omega0, lam, q0, rho_matter
 
     Omega0 = value
     lam = 1.0 - Omega0
+    q0 = 0.5 * Omega0 - lam
+    rho_matter = rho_crit_0 * Omega0
 
 
 @recalculate_precalc_tables
@@ -60,20 +66,23 @@ def set_omega_baryon(value):
     """
     Define new omega baryon value.
     """
-    global OmegaB
+    global OmegaB, num_h_0, meandt
 
     OmegaB = value
-
+    num_h_0 = (1 - abu_he_mass) * OmegaB * rho_crit_0 / m_p
+    meandt = 3.0 * lambda0 ** 3 / (32. * np.pi) * A10 * Tstar * num_h_0 / (
+            H0cgs / h) * 1000.
 
 @recalculate_precalc_tables
 def set_omega_lambda(value):
     """
     Define new omega lambda value.
     """
-    global lam, OmegaL
+    global lam, OmegaL, q0
 
     lam = value
     OmegaL = value
+    q0 = 0.5 * Omega0 - lam
 
 
 @recalculate_precalc_tables
@@ -102,16 +111,29 @@ def set_cosmology(cosmology: FLRW):
     Sets tools21cm's cosmology parameters to those defined by a cosmology
     instance from astropy
     """
-    global h, H0, Omega0, OmegaB, OmegaL, lam, n_s, sigma_8
-
-    h = cosmology.h
-    H0 = 100.0 * cosmology.h
-    Omega0 = cosmology.Om0
-    OmegaB = cosmology.Ob0
+    global OmegaL, lam, n_s, sigma_8
     OmegaL = 1.0 - cosmology.Om0
     lam = 1.0 - cosmology.Om0
     n_s = cosmology.meta['n']
     sigma_8 = cosmology.meta['sigma8']
+
+    global h, H0, H0cgs, rho_crit_0
+    h = cosmology.h
+    H0 = 100.0 * cosmology.h
+    H0cgs = H0 * 1e5 / Mpc
+    rho_crit_0 = 3.0 * H0cgs * H0cgs / (8.0 * np.pi * G_grav)
+
+    global Omega0, q0, rho_matter
+    Omega0 = cosmology.Om0
+    q0 = 0.5 * Omega0 - lam
+    rho_matter = rho_crit_0 * Omega0
+
+    global OmegaB, num_h_0, meandt
+    OmegaB = cosmology.Ob0
+    num_h_0 = (1 - abu_he_mass) * OmegaB * rho_crit_0 / m_p
+
+    meandt = 3.0 * lambda0 ** 3 / (32. * np.pi) * A10 * Tstar * num_h_0 / (
+            H0cgs / h) * 1000.
 
 
 def set_abundance_helium(value):
@@ -147,12 +169,12 @@ n_s = 0.96
 sigma_8 = 0.8
 
 # Cosmology
+Tcmb0 = 2.725
 H0 = 100.0 * h
 H0cgs = H0 * 1e5 / Mpc
 rho_crit_0 = 3.0 * H0cgs * H0cgs / (8.0 * np.pi * G_grav)
 q0 = 0.5 * Omega0 - lam
 rho_matter = rho_crit_0 * Omega0
-Tcmb0 = 2.725
 
 # Redshift dependent Hubble parameter, km/s/Mpc
 Hz = lambda z: H0 * np.sqrt(Omega0 * (1.0 + z) ** 3. + lam)
