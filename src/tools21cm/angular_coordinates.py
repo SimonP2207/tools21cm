@@ -15,7 +15,10 @@ from tqdm import tqdm
 import sys
 
 
-def physical_lightcone_to_observational(physical_lightcone, input_z_low, input_z_high, output_dnu, output_dtheta, input_box_size_mpc=None, verbose=True):
+def physical_lightcone_to_observational(
+        physical_lightcone, input_z_low, input_z_high, output_dnu,
+        output_dtheta, input_box_size_mpc=None, verbose=True
+):
     '''
     Interpolate a lightcone volume from physical (length) units
     to observational (angle/frequency) units.
@@ -33,23 +36,30 @@ def physical_lightcone_to_observational(physical_lightcone, input_z_low, input_z
         * The output volume as a numpy array
         * The output frequencies in MHz as an array of floats
     '''
-    if input_box_size_mpc == None:
+    if input_box_size_mpc is None:
         input_box_size_mpc = conv.LB
     
     #For each output redshift: average the corresponding slices
     hf.print_msg('Making observational lightcone...')
     hf.print_msg('Binning in frequency...')
-    lightcone_freq, output_freqs = bin_lightcone_in_frequency(physical_lightcone,\
-                                                         input_z_low, input_box_size_mpc, output_dnu)
+    lightcone_freq, output_freqs = bin_lightcone_in_frequency(
+        physical_lightcone, input_z_low, input_box_size_mpc, output_dnu
+    )
 
     #ES: Calculate the FoV in degrees at highest z
     fov_deg = cm.angular_size_comoving(input_box_size_mpc, input_z_high)
 
     #Calculate dimensions of output volume
     n_cells_theta = int(fov_deg*60./output_dtheta + 1.)
+
+    # SJDP: Added this line to ensure output volume slice is same shape as
+    # returned array from physical_slice_to_angular's slice
+    if n_cells_theta % 2 == 1:
+        n_cells_theta += 1
+
     n_cells_nu = len(output_freqs)
 
-    #Go through each slice and make angular slices for each one
+    # Go through each slice and make angular slices for each one
     hf.print_msg('Binning in angle...')
     output_volume = np.zeros((n_cells_theta, n_cells_theta, n_cells_nu))
 
@@ -57,10 +67,11 @@ def physical_lightcone_to_observational(physical_lightcone, input_z_low, input_z
         if i%10 == 0:
             hf.print_msg('Slice %d of %d' % (i, n_cells_nu))
         z = cm.nu_to_z(output_freqs[i])
-        #print("redshift : ", i, z)
-        output_volume[:,:,i] = physical_slice_to_angular(lightcone_freq[:,:,i], z, \
-                                        slice_size_mpc=input_box_size_mpc, fov_deg=fov_deg,\
-                                        dtheta=output_dtheta, order=2)
+
+        output_volume[:,:,i] = physical_slice_to_angular(
+            lightcone_freq[:,:,i], z, slice_size_mpc=input_box_size_mpc,
+            fov_deg=fov_deg, dtheta=output_dtheta, order=2
+        )
         
     return output_volume, output_freqs
 
@@ -129,7 +140,6 @@ def physical_slice_to_angular(input_slice, z, slice_size_mpc, fov_deg, dtheta, o
     Returns:
         (angular_slice, size_deg)
     '''
-    
     #For resampling
     fov_mpc = cm.deg_to_cdist(fov_deg, z)
     cell_size_mpc = fov_mpc/(fov_deg*60./dtheta)
@@ -137,13 +147,18 @@ def physical_slice_to_angular(input_slice, z, slice_size_mpc, fov_deg, dtheta, o
 
     #ES: Are we worried about edge effect? edges are likely to be cut
     #ES: Resample in even number of cells so that it can be extracted symmetrically from centre
-    if n_cells_resampled % 2 != 0: 
+    if n_cells_resampled % 2 != 0:
         n_cells_resampled -= 1
     resampled_slice = resample_slice(input_slice, n_cells_resampled, order)
     
     #Rescale the array
     slice_n = resampled_slice.shape[0] # size of the slice with the right pixel size in angular coordinates
     wanted_n = int(fov_deg*60./dtheta + 1) # size of the slice of observational lightcone we want 
+
+    # SJDP: Added this line to ensure output volume slice is same shape as
+    # returned array from physical_slice_to_angular's slice
+    if wanted_n % 2 == 1:
+        wanted_n += 1
 
     #print("slice_n and wanted_n = ", slice_n, wanted_n)
     #print(resampled_slice.shape)
